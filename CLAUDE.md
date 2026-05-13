@@ -6,6 +6,7 @@ This directory is a reusable reference library for common implementation pattern
 
 | File | Pattern |
 |------|---------|
+| `beads-issue-tracking.md` | Graph-based CLI issue tracker (`bd`) for AI coding agents — session-start commands, claim/close workflow, replaces markdown TODO lists as the single source of truth |
 | `embeddings.md` | Semantic search and RAG — chunking strategies (structural vs. semantic), vector-only vs. hybrid retrieval (BM25 + vector + RRF), embedding model selection |
 | `memory-layer.md` | Persistent hybrid memory — SQLite + FTS5/BM25 + vector similarity fused via RRF; see `embeddings.md` § Retrieval Strategy for the conceptual background |
 | `multi-agent-rag-review.md` | Multi-stage RAG pipeline for reviewing a request that bundles multiple items — Parser → Retriever → Evaluator (per topic) → Synthesizer, with per-item citations and a coverage-check audit trail |
