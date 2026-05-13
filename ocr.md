@@ -197,6 +197,51 @@ def process_page(doc_id, page_num, pdf_path, index, client):
 
 ---
 
+## 6. Upgrading Tesseract Pages to Vision
+
+If you initially ran Tesseract and want to upgrade all non-vision pages to Claude
+after the fact, the index makes this straightforward:
+
+```python
+candidates = [
+    entry for entry in index.values()
+    if not entry.get("used_vision") and not entry.get("flagged_blank")
+]
+for entry in candidates:
+    img = page_to_image(pdf_path, entry["page"])
+    text = claude_vision_ocr(img, client)
+    key = f"{entry['doc_id']}_{entry['page']:04d}"
+    (Path("ocr") / entry["text_file"]).write_text(text, encoding="utf-8")
+    index[key]["used_vision"] = True
+    index[key]["scores"] = compute_scores(text)
+    index[key]["char_count"] = len(text)
+    save_index(index)
+```
+
+This is why tracking `used_vision` per page matters — it makes selective reprocessing
+trivial without re-running everything.
+
+---
+
+## Known Gotchas
+
+**Always send RGB images.** Even for B&W source documents, convert to RGB before
+encoding. In testing, Google Vision and Document AI returned near-blank output
+(7 words per page) when sent grayscale PNG — the same pages Claude handled correctly.
+`img.convert("RGB")` before encoding costs nothing and avoids silent failures.
+
+**Quality scoring catches Tesseract noise, not vision LLM noise.** The digit/suspicious
+thresholds were designed to detect Tesseract garbage output. Vision LLM output rarely
+triggers them — if a vision LLM page looks wrong, the problem is usually the prompt
+or a genuinely blank/illegible page, not a threshold issue.
+
+**Single-digit word counts mean silent failure.** A working service on a dense prose
+page returns 150–300 words. If you see <20 words on a page that should have content,
+the service failed without raising an error (wrong image format, API misconfiguration,
+disabled API). Check the raw output before assuming the page is blank.
+
+---
+
 ## Running a Bake-off
 
 Before committing to any OCR service on a new document type, compare them on
