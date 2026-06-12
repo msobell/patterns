@@ -62,6 +62,9 @@ def chunk_by_semantics(
     threshold: float = 0.3,   # lower = more splits; tune per corpus
     min_chunk_words: int = 40,
 ) -> list[str]:
+    # Naive splitter for illustration — misses "?", "!", and newline-terminated
+    # sentences, and breaks on abbreviations ("Dr. Smith"). Use a real sentence
+    # tokenizer (nltk punkt, pysbd, spaCy) in production.
     sentences = [s.strip() for s in text.split(". ") if s.strip()]
     if not sentences:
         return []
@@ -152,7 +155,6 @@ def reciprocal_rank_fusion(
 
 def hybrid_search(
     query: str,
-    chunks: list[str],
     chunk_ids: list[str],
     bm25: BM25Okapi,
     vector_collection,
@@ -192,7 +194,13 @@ RRF is robust to score-scale differences between BM25 and cosine similarity — 
 
 ### 5. Environment-Aware Pathing
 - **The Absolute Path Mandate**: When deploying vector search as a service (e.g., via MCP, Docker, or Cloud Functions), relative paths to local databases (like `.chroma_db`) will cause "Read-only file system" or "Database not found" errors.
-- **Solution**: Always resolve paths relative to the application's root directory at runtime using `os.path.abspath`.
+- **Solution**: Anchor paths to the module's own location, not the working directory. `os.path.abspath` doesn't help — it resolves against the current working directory, which is exactly what varies between deployment environments.
+
+```python
+from pathlib import Path
+
+DB_PATH = Path(__file__).resolve().parent / ".chroma_db"
+```
 
 ## When to Implement This Pattern
 Implement Semantic Search/Embeddings when:

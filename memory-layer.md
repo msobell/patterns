@@ -1,4 +1,4 @@
-# Memory Layer — Implementation Guide
+# Pattern: Memory Layer
 
 Hybrid local knowledge base for saving and retrieving notes across sessions.
 Combines keyword search (FTS5/BM25) and semantic search (vector embeddings)
@@ -132,11 +132,13 @@ def ensure_virtual_tables(session: Session):
         )
     """))
 
-    # Vector similarity search — 384 dims matches all-MiniLM-L6-v2
+    # Vector similarity search — 384 dims matches all-MiniLM-L6-v2.
+    # distance_metric=cosine so KNN MATCH queries use cosine; vec0 defaults
+    # to L2 otherwise. (Changing this only affects newly created tables.)
     session.execute(text("""
         CREATE VIRTUAL TABLE IF NOT EXISTS memories_vec USING vec0(
             id INTEGER PRIMARY KEY,
-            embedding float[384]
+            embedding float[384] distance_metric=cosine
         )
     """))
 
@@ -237,14 +239,27 @@ def reciprocal_rank_fusion(
 def hybrid_search(session: Session, query: str, n_results: int = 10) -> List[Memory]:
     """BM25 + cosine similarity, fused via RRF."""
 
-    # 1. FTS5 — BM25 keyword search
-    fts_rows = session.execute(
-        text("SELECT id FROM memories_fts WHERE content MATCH :q LIMIT :n"),
-        {"q": query, "n": n_results},
-    ).fetchall()
-    fts_ids = [row[0] for row in fts_rows]
+    # 1. FTS5 — BM25 keyword search.
+    # FTS5 treats the MATCH argument as query syntax, so raw user input with
+    # apostrophes or hyphens ("don't", "bench-press") raises a syntax error.
+    # Quote each token as a phrase and OR them for recall — RRF handles ranking.
+    # ORDER BY rank is required: without it FTS5 returns rows in arbitrary
+    # order, and the "ranked list" fed to RRF isn't actually ranked.
+    fts_query = " OR ".join(
+        '"' + tok.replace('"', '""') + '"' for tok in query.split()
+    )
+    fts_ids: List[int] = []
+    if fts_query:
+        fts_rows = session.execute(
+            text("SELECT id FROM memories_fts WHERE content MATCH :q ORDER BY rank LIMIT :n"),
+            {"q": fts_query, "n": n_results},
+        ).fetchall()
+        fts_ids = [row[0] for row in fts_rows]
 
-    # 2. Vector — cosine similarity
+    # 2. Vector — cosine KNN.
+    # The MATCH + k form uses sqlite-vec's KNN index; an ORDER BY
+    # vec_distance_cosine(...) full scan also works but brute-forces the
+    # whole table. Requires distance_metric=cosine on the table (step 2).
     vec_ids = []
     try:
         import sqlite_vec
@@ -252,8 +267,8 @@ def hybrid_search(session: Session, query: str, n_results: int = 10) -> List[Mem
         vec_rows = session.execute(
             text("""
                 SELECT id FROM memories_vec
-                ORDER BY vec_distance_cosine(embedding, :qv)
-                LIMIT :n
+                WHERE embedding MATCH :qv AND k = :n
+                ORDER BY distance
             """),
             {"qv": query_blob, "n": n_results},
         ).fetchall()

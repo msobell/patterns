@@ -1,4 +1,4 @@
-# OCR Pipeline — Implementation Guide
+# Pattern: OCR Pipeline
 
 PDF → per-page text files using a vision LLM. Use this pattern when standard
 OCR tools (Tesseract, Google Document AI, Cloud Vision) produce poor output on
@@ -203,12 +203,16 @@ If you initially ran Tesseract and want to upgrade all non-vision pages to Claud
 after the fact, the index makes this straightforward:
 
 ```python
+# The index spans all documents, so resolve the source PDF per entry —
+# a single fixed pdf_path would OCR pages from the wrong document.
+pdf_paths = {"my-document": Path("pdfs/my-document.pdf")}  # doc_id -> PDF
+
 candidates = [
     entry for entry in index.values()
     if not entry.get("used_vision") and not entry.get("flagged_blank")
 ]
 for entry in candidates:
-    img = page_to_image(pdf_path, entry["page"])
+    img = page_to_image(pdf_paths[entry["doc_id"]], entry["page"])
     text = claude_vision_ocr(img, client)
     key = f"{entry['doc_id']}_{entry['page']:04d}"
     (Path("ocr") / entry["text_file"]).write_text(text, encoding="utf-8")

@@ -1,4 +1,4 @@
-# Virtual Env + direnv — Setup Pattern
+# Pattern: Virtual Env + direnv
 
 One `.envrc` per project. When you `cd` into the directory, direnv automatically
 activates the venv and exports all secrets. No manual `source`, no `.env` files,
@@ -15,10 +15,16 @@ brew install direnv
 
 # Add to shell (zsh)
 echo 'eval "$(direnv hook zsh)"' >> ~/.zshrc
+```
 
-# Allow the .envrc for this directory
+Then create `.envrc` (next section) and approve it:
+
+```bash
 direnv allow
 ```
+
+direnv refuses to load an unapproved `.envrc`; re-run `direnv allow` after
+every edit to the file.
 
 ## .envrc
 

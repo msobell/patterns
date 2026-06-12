@@ -27,7 +27,7 @@ bd close <id>                   # mark done when complete
 bd create "Title of new issue"  # open an issue for something discovered mid-session
 ```
 
-Issue IDs look like `nist-csf-a1b2`. Reference them in commit messages.
+Issue IDs look like `<project-prefix>-a1b2` (the prefix is configured per repo). Reference them in commit messages.
 
 ## Before starting implementation
 

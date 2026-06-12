@@ -21,7 +21,7 @@ When starting a new project or feature, check this directory first. If a pattern
 2. Adapt the code to your project's structure — file paths, import roots, and session/client wiring are illustrative, not prescriptive.
 3. Follow the "When to Implement" or tradeoff guidance before committing to a stack.
 
-When you solve a problem that isn't covered here and is likely to recur, add a new pattern file following the same structure: use case, stack, key lessons, code, and known limitations.
+When you solve a problem that isn't covered here and is likely to recur, add a new pattern file following the same structure: use case, stack, key lessons, code, and known limitations. Title it `# Pattern: <Name>`, and update the Contents table here, the Relationships Between Files section (if the new pattern connects to existing ones), and the table in `README.md`.
 
 ## Relationships Between Files
 

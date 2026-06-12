@@ -1,4 +1,4 @@
-# Multi-Agent RAG Review — Implementation Guide
+# Pattern: Multi-Agent RAG Review
 
 Pipeline pattern for reviewing a free-text request against a document corpus,
 where the request bundles multiple items and you need traceable per-item
