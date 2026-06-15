@@ -8,6 +8,7 @@ This directory is a reusable reference library for common implementation pattern
 |------|---------|
 | `beads-issue-tracking.md` | Graph-based CLI issue tracker (`bd`) for AI coding agents — session-start commands, claim/close workflow, replaces markdown TODO lists as the single source of truth |
 | `embeddings.md` | Semantic search and RAG — chunking strategies (structural vs. semantic), vector-only vs. hybrid retrieval (BM25 + vector + RRF), embedding model selection |
+| `fastapi-dashboard.md` | Local web dashboard — FastAPI serving a thin JSON API + Jinja HTML shell, vanilla-JS fetch, Chart.js, and a dark CSS-variable design system; no frontend build step |
 | `memory-layer.md` | Persistent hybrid memory — SQLite + FTS5/BM25 + vector similarity fused via RRF; see `embeddings.md` § Retrieval Strategy for the conceptual background |
 | `multi-agent-rag-review.md` | Multi-stage RAG pipeline for reviewing a request that bundles multiple items — Parser → Retriever → Evaluator (per topic) → Synthesizer, with per-item citations and a coverage-check audit trail |
 | `ocr.md` | PDF OCR using a vision LLM — per-page text extraction with quality scoring and resume-safe indexing; any capable vision LLM (Claude, Gemini, GPT-4o) works |
@@ -29,6 +30,7 @@ When you solve a problem that isn't covered here and is likely to recur, add a n
 - `memory-layer.md` is the SQLite implementation of hybrid RAG. Read `embeddings.md` first for the why, then `memory-layer.md` for the how.
 - `multi-agent-rag-review.md` is a pipeline pattern built on top of single-pass RAG. Read `embeddings.md` first if you're new to RAG; reach for the multi-agent pattern only when a single request bundles multiple items and per-item citation traceability matters.
 - `ocr.md` pairs naturally with `embeddings.md` — OCR output is a common input to a RAG pipeline, and semantic chunking (covered in `embeddings.md`) is often needed when OCR doesn't preserve document headers.
+- `fastapi-dashboard.md` is the presentation layer over a local SQLite app — its JSON routes read from a store that `memory-layer.md` could be writing. The two compose: `memory-layer.md` for persistence and search, `fastapi-dashboard.md` to visualize and drill into the data. It's otherwise independent of the RAG patterns.
 
 ## Conventions
 
